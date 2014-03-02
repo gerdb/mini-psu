@@ -34,9 +34,10 @@ void adc_start_conv(void);
 uint16_t adc_getResult(int chan);
 
 // Constant values
-#define ADC_CHAN_SUN 8
-#define ADC_CHAN_POL 9
-#define ADC_CHAN_BATT 10
+#define ADC_CHAN_IOUT 0
+#define ADC_CHAN_VSSM 1
+#define ADC_CHAN_VOUTM 2
+#define ADC_CHAN_VIN 3
 
 #define ADC1_DR_ADDRESS    ((uint32_t)0x4001204C)
 

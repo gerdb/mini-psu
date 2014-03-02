@@ -22,58 +22,18 @@
 #ifndef SPI_H_
 #define SPI_H_
 #include "stm32f4xx.h"
+#include "stm32f4xx_gpio.h"
+#include "stm32f4xx_rcc.h"
 #include "stm32f4xx_spi.h"
 #include "misc.h"
 
 // Function Prototypes
 void spi_init(void);
-void spi_tx_irq(void);
-void spi_rx_irq(void);
-void spi_machine(void);
-void spi_send(int bytes,uint8_t txdata1,uint8_t txdata2 );
-int spi_getGyro(void);
+void spi_send(uint8_t byte );
 
 // Macros
-#define SPI_CS_ALT_DISABLE() GPIOE->BSRRL = GPIO_Pin_8;
-#define SPI_CS_ALT_ENABLE() GPIOE->BSRRH = GPIO_Pin_8;
-#define SPI_CS_GYRO_DISABLE() GPIOE->BSRRL = GPIO_Pin_5;
-#define SPI_CS_GYRO_ENABLE() GPIOE->BSRRH = GPIO_Pin_5;
-#define SPI_CS_ACC_DISABLE() GPIOE->BSRRL = GPIO_Pin_6;
-#define SPI_CS_ACC_ENABLE() GPIOE->BSRRH = GPIO_Pin_6;
-
-
-// Constant values
-#define MS5611_CMD_ADC_READ 0x00
-#define MS5611_CMD_RESET 0x1E
-#define MS5611_CMD_CONV_D1_256 0x40
-#define MS5611_CMD_CONV_D1_512 0x42
-#define MS5611_CMD_CONV_D1_1024 0x44
-#define MS5611_CMD_CONV_D1_2048 0x46
-#define MS5611_CMD_CONV_D1_4096 0x48
-#define MS5611_CMD_CONV_D2_256 0x50
-#define MS5611_CMD_CONV_D2_512 0x52
-#define MS5611_CMD_CONV_D2_1024 0x54
-#define MS5611_CMD_CONV_D2_2048 0x56
-#define MS5611_CMD_CONV_D2_4096 0x58
-
-
-#define LSM330DL_CTRL_REG1_G   0x20
-#define LSM330DL_CTRL_REG2_G   0x21
-#define LSM330DL_CTRL_REG3_G   0x22
-#define LSM330DL_CTRL_REG4_G   0x23
-#define LSM330DL_CTRL_REG5_G   0x24
-#define LSM330DL_DATACAPTURE_G 0x25
-#define LSM330DL_OUT_TEMP_G    0x26
-#define LSM330DL_STATUS_REG_G  0x27
-#define LSM330DL_OUT_X_L_G     0x28
-#define LSM330DL_OUT_X_H_G     0x29
-#define LSM330DL_OUT_Y_L_G     0x2A
-#define LSM330DL_OUT_Y_H_G     0x2B
-#define LSM330DL_OUT_Z_L_G     0x2C
-#define LSM330DL_OUT_Z_H_G     0x2D
-
-#define LSM330DL_READ 0x80
-#define LSM330DL_WRITE 0x00
+#define SPI_CS_DISABLE() GPIOB->BSRRL = GPIO_Pin_12;
+#define SPI_CS_ENABLE()  GPIOB->BSRRH = GPIO_Pin_12;
 
 
 #endif /* SPI_H_ */

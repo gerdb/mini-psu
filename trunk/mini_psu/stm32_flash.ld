@@ -1,5 +1,5 @@
 /*
- *  Project:      Bumblecopter
+ *  Project:      mini_psu
  *  File:         stm32_flash.ld
  *  Author:       Gerd Bartelt
  *

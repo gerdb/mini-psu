@@ -112,7 +112,7 @@ void pwm_init(void) {
 	TIM_CtrlPWMOutputs(TIM1, ENABLE);
 
 	TIM_SetCompare4(TIM3, 500); // 50% duty
-	TIM_SetCompare1(TIM1, 1000); // 50% duty
+	TIM_SetCompare1(TIM1, 0); // 50% duty
 }
 
 /**
@@ -122,5 +122,5 @@ void pwm_init(void) {
  * 			value   Value of the PWM from 0..999
  */
 void pwm_set(int16_t value) {
-
+	TIM_SetCompare1(TIM1, value);
 }

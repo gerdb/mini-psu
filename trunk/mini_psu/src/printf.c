@@ -32,7 +32,7 @@
 	replace outbyte(c) by your own function call.
 */
 //#define putchar(c) USART2_putchar(c)
-#include "usart.h"
+//#include "usart.h"
 
 /**
  * The printchar function that uses the USART
@@ -44,7 +44,7 @@ static void printchar(char **str, int c)
 		**str = c;
 		++(*str);
 	}
-	else usart_putchar(c);
+	//else usart_putchar(c);
 }
 
 #define PAD_RIGHT 1

@@ -22,34 +22,52 @@
 
 #include "stm32f4xx.h"
 
+#include "project.h"
 #include "main.h"
-//#include "adc.h"
+#include "adc.h"
 #include "pwm.h"
 #include "dac.h"
-#include "project.h"
+#include "view.h"
+#include "encoder.h"
+
 
 int tick = 0;
+int tick50ms = 0;
+int tick50msCnt = 0;
+int tick100ms = 0;
+int tick100msCnt = 0;
+
+
 
 int main(void) {
 
 	// initialize all modules
-	//adc_init();
+	adc_init();
 	dac_init();
 	pwm_init();
+	encoder_init();
+	view_init();
 
-	// set sys tick to 100us
-	SysTick_Config(SystemCoreClock / 10000);
+
+	// set sys tick to 1ms
+	SysTick_Config(SystemCoreClock / 1000);
 
 	dac_setVoltageValue(1000);
 	dac_setCurrentValue(2000);
 
 	while (1) {
 
+		encoder_task();
+
 		// wait for task tick
 		while (tick == 0);
 		tick = 0;
+		if (tick50ms) {
+			tick50ms = 0;
+			view_task();
+		}
 
-//		adc_start_conv();
+		//adc_start_conv();
 
 	}
 }
@@ -58,4 +76,14 @@ int main(void) {
 
 void setTick(void) {
 	tick = 1;
+	tick50msCnt++;
+	tick100msCnt++;
+	if (tick50msCnt>=50) {
+		tick50msCnt = 0;
+		tick50ms = 1;
+	}
+	if (tick100msCnt>=100) {
+		tick100msCnt = 0;
+		tick100ms = 1;
+	}
 }
