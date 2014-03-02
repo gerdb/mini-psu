@@ -1,9 +1,9 @@
 /*
  *  Project:      Mini_PSU
- *  File:         usart.h
+ *  File:         view.h
  *  Author:       Gerd Bartelt - www.sebulli.com
  *
- *  Description:  header file for usart.c
+ *  Description:  header file for view.c
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,17 +19,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef USART_H_
-#define USART_H_
-
-#include "stm32f4xx.h"
-#include "stm32f4xx_usart.h"
-#include "stm32f4xx_gpio.h"
+#ifndef VIEW_H_
+#define VIEW_H_
 
 // Function Prototypes
-void usart_init(void);
-void usart_putchar(int ch);
-void usart_buffertask(void);
-int my_printf(const char *format, ...);
+void view_init(void);
+void view_task(void);
 
-#endif /* USART_H_ */
+#endif /* VIEW_H_ */

@@ -176,26 +176,10 @@ void SysTick_Handler(void)
 
 void TIM1_CC_IRQHandler(void)
 {
-  /* Clear TIM1 Capture compare interrupt pending bit */
-  TIM_ClearITPendingBit(TIM1, TIM_IT_CC1);
-  periode = TIM_GetCapture1(TIM1);
-  duty = TIM_GetCapture2(TIM1);
-  rc_captured(duty, periode);
- }
+}
 
 
 void SPI2_IRQHandler(void)
 {
-	// SPI in Master Tramitter mode---------------------------------------
-	if (SPI_I2S_GetITStatus(SPI2, SPI_I2S_IT_TXE) == SET)
-	{
-	  spi_tx_irq();
-	}
-
-//	if (SPI_I2S_GetITStatus(SPI2, SPI_I2S_IT_RXNE) == SET)
-//	{
-//		spi_rx_irq();
-//	}
-
 }
 
