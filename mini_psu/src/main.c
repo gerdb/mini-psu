@@ -57,7 +57,7 @@ int main(void) {
 
 	while (1) {
 
-		encoder_task();
+
 
 		// wait for task tick
 		while (tick == 0);
@@ -86,4 +86,6 @@ void setTick(void) {
 		tick100msCnt = 0;
 		tick100ms = 1;
 	}
+
+	encoder_task();
 }
