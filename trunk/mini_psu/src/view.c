@@ -53,11 +53,7 @@ void view_task(void) {
 		oled_writeStringLarge (0,0,  s, OLED_RED);
 		sprintf(s,"%01u", voltage % 10);
 		oled_writeStringMedium (60,7,  s, OLED_RED);
-	}
-	if (view_schedule == 1) {
 		oled_writeStringSmall (76,14,  "Volt", OLED_RED);
-		sprintf(s,"%02u.%01u",voltage_setp / 10, voltage_setp % 10);
-		oled_writeStringSmall (76,0,  s, OLED_RED);
 	}
 
 	if (view_schedule == 2) {
@@ -65,12 +61,13 @@ void view_task(void) {
 		oled_writeStringLarge (0,24, s, OLED_YELLOW);
 		sprintf(s,"%01u", current % 10);
 		oled_writeStringMedium (60,31, s, OLED_YELLOW);
-	}
-	if (view_schedule == 3) {
 		oled_writeStringSmall (76,38, "Amps", OLED_YELLOW);
-		sprintf(s,"%01u.%02u",current_setp / 100, current_setp % 100);
-		oled_writeStringSmall (76,24, s, OLED_YELLOW);
 	}
+
+	sprintf(s,"%02u.%01u",voltage_setp / 10, voltage_setp % 10);
+	oled_writeStringSmall (76,0,  s, OLED_RED);
+	sprintf(s,"%01u.%02u",current_setp / 100, current_setp % 100);
+	oled_writeStringSmall (76,24, s, OLED_YELLOW);
 
 	oled_drawScope ();
 
