@@ -24,16 +24,25 @@
 #include "oled.h"
 #include "adc.h"
 #include "encoder.h"
+#include "data.h"
 
-int view_schedule = 0;
 
-// Displayed values
-int voltage = 1234;
-int current = 1005;
 
 //use own printf
 int sprintf(char *out, const char *format, ...);
+
+/**
+ * local variables
+ */
 char s[10];
+int view_schedule = 0;
+
+/**
+ * local functions
+ */
+static void view_DisplayNormal(void);
+static void view_DisplayControllerSettings(void);
+
 /**
  * Initialize the module
  */
@@ -42,24 +51,22 @@ void view_init(void) {
 	oled_init();
 }
 
-/**
- * The view task
+/*
+ * Display the standard screen with voltage and current settings
  */
-void view_task(void) {
-	voltage = adc_getResult(ADC_CHAN_VIN);
-
+static void view_DisplayNormal(void) {
 	if (view_schedule == 0) {
-		sprintf(s,"%02u.%01u",voltage / 100, (voltage % 100) / 10);
+		sprintf(s,"%02u.%01u",voltage_VOUT / 100, (voltage_VOUT % 100) / 10);
 		oled_writeStringLarge (0,0,  s, OLED_RED);
-		sprintf(s,"%01u", voltage % 10);
+		sprintf(s,"%01u", voltage_VOUT % 10);
 		oled_writeStringMedium (60,7,  s, OLED_RED);
 		oled_writeStringSmall (76,14,  "Volt", OLED_RED);
 	}
 
 	if (view_schedule == 2) {
-		sprintf(s,"%01u.%02u",current / 1000, (current % 1000) / 10);
+		sprintf(s,"%01u.%02u",current_IOUT / 1000, (current_IOUT % 1000) / 10);
 		oled_writeStringLarge (0,24, s, OLED_YELLOW);
-		sprintf(s,"%01u", current % 10);
+		sprintf(s,"%01u", current_IOUT % 10);
 		oled_writeStringMedium (60,31, s, OLED_YELLOW);
 		oled_writeStringSmall (76,38, "Amps", OLED_YELLOW);
 	}
@@ -70,7 +77,41 @@ void view_task(void) {
 	oled_writeStringSmall (76,24, s, OLED_YELLOW);
 
 	oled_drawScope ();
+}
 
+/*
+ * Display the controller settings
+ */
+static void view_DisplayControllerSettings(void) {
+
+
+	sprintf(s,"%3u", pid_KP);
+	oled_writeStringMedium (0, 0,  s, cursor == CURSOR_KP ? OLED_RED : OLED_YELLOW);
+
+	sprintf(s,"%3u", pid_KI);
+	oled_writeStringMedium (0, 16,  s, cursor == CURSOR_KI ? OLED_RED : OLED_YELLOW);
+
+	sprintf(s,"%3u", pid_KD);
+	oled_writeStringMedium (0, 32,  s, cursor == CURSOR_KD ? OLED_RED : OLED_YELLOW);
+
+	sprintf(s,"%3u", voltage_VSM);
+	oled_writeStringMedium (0, 48,  s, OLED_YELLOW);
+
+	sprintf(s,"%3u", voltage_setpSM);
+	oled_writeStringSmall (78, 0,  s, OLED_YELLOW);
+}
+
+
+/**
+ * The view task
+ */
+void view_task(void) {
+
+	if (setupController) {
+		view_DisplayControllerSettings();
+	} else {
+		view_DisplayNormal();
+	}
 
 	view_schedule++;
 	if (view_schedule >= 4)

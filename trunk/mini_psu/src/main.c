@@ -29,16 +29,20 @@
 #include "dac.h"
 #include "view.h"
 #include "encoder.h"
+#include "data.h"
 
-
+/*
+ * local variables
+ */
 int tick = 0;
 int tick50ms = 0;
 int tick50msCnt = 0;
 int tick100ms = 0;
 int tick100msCnt = 0;
 
-
-
+/*
+ * Main function
+ */
 int main(void) {
 
 	// initialize all modules
@@ -63,6 +67,8 @@ int main(void) {
 		while (tick == 0);
 		tick = 0;
 		if (tick50ms) {
+			voltage_VOUT = adc_getResult(ADC_CHAN_VIN);
+			voltage_VSM = adc_getResult(ADC_CHAN_VIN);
 			tick50ms = 0;
 			view_task();
 		}

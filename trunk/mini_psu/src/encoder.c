@@ -20,15 +20,18 @@
  *
  */
 #include "encoder.h"
+#include "data.h"
 
 // Local functions
 static void encoder_decode(uint8_t encoderNr);
-
-int voltage_setp = 120;
-int current_setp = 200;
+static void encoder_step(uint8_t encoderNr, T_ENC_STEP direction);
+static void encoder_click(uint8_t encoderNr);
 
 // State of the encoder
 static T_UN_STATES encoderState[2];
+static int encoderSwitch[2] = {0,0};
+static int encoderSwitchCnt[2] = {0,0};
+static int encoderSwitchDebounced[2] = {0,0};
 
 // Encoder table
 static const T_ENC_STEP EN_StepTab[16] =
@@ -86,28 +89,109 @@ void encoder_init(void) {
 	encoderState[1].state.old = encoderState[1].state.new;
 }
 
+/*
+ * Decodes encoder's push button
+ */
+static void encoder_click(uint8_t encoderNr) {
+	if (setupController) {
+		if (encoderNr == 1) {
+			cursor ++;
+			if (cursor >= 3)
+				cursor = 0;
+		}
+	}
+}
+
+static void encoder_step(uint8_t encoderNr, T_ENC_STEP direction) {
+	if (setupController) {
+		if (encoderNr == 0) {
+
+		}
+		if (encoderNr == 1) {
+			if (cursor  == CURSOR_KP) {
+				if ((direction == ENC_LEFT_STEP) && (pid_KP > 0)) {
+					pid_KP --;
+				}
+				if ((direction == ENC_RIGHT_STEP) && (pid_KP < 100)) {
+					pid_KP ++;
+				}
+			}
+
+			if (cursor  == CURSOR_KI) {
+				if ((direction == ENC_LEFT_STEP) && (pid_KI > 0)) {
+					pid_KI --;
+				}
+				if ((direction == ENC_RIGHT_STEP) && (pid_KI < 100)) {
+					pid_KI ++;
+				}
+			}
+
+			if (cursor  == CURSOR_KD) {
+				if ((direction == ENC_LEFT_STEP) && (pid_KD > 0)) {
+					pid_KD --;
+				}
+				if ((direction == ENC_RIGHT_STEP) && (pid_KD < 100)) {
+					pid_KD ++;
+				}
+			}
+		}
+	} else {
+
+		if (encoderNr == 0) {
+			if ((direction == ENC_LEFT_STEP) && (voltage_setp >0)) {
+				voltage_setp --;
+			}
+			if ((direction == ENC_RIGHT_STEP) && (voltage_setp < 240)) {
+				voltage_setp ++;
+			}
+
+		}
+		if (encoderNr == 1) {
+			if ((direction == ENC_LEFT_STEP) && (current_setp >0)) {
+				current_setp --;
+			}
+			if ((direction == ENC_RIGHT_STEP) && (current_setp < 300)) {
+				current_setp ++;
+			}
+		}
+	}
+}
+
 static void encoder_decode(uint8_t encoderNr)
 {
-	// Decode
+
+	// debounce switch
+
+	if (encoderSwitch[encoderNr] == 0 ) {
+		if (encoderSwitchCnt[encoderNr]<10)
+			encoderSwitchCnt[encoderNr]++;
+		else {
+			if (encoderSwitchDebounced[encoderNr] != 1) {
+				encoderSwitchDebounced[encoderNr] = 1;
+				encoder_click(encoderNr);
+			}
+		}
+	} else  {
+		if (encoderSwitchCnt[encoderNr]>0)
+			encoderSwitchCnt[encoderNr]--;
+		else {
+			if (encoderSwitchDebounced[encoderNr] != 0) {
+				encoderSwitchDebounced[encoderNr] = 0;
+			}
+		}
+	}
+
+
+	// Decode rotary encoder
 	switch ( EN_StepTab[encoderState[encoderNr].index] )
 	{
 	case ENC_NO_STEP:
 		break;
 	case ENC_LEFT_STEP:
-		if ((encoderNr == 0) && (voltage_setp >0)) {
-			voltage_setp --;
-		}
-		if ((encoderNr == 1) && (current_setp >0)) {
-			current_setp --;
-		}
+		encoder_step(encoderNr, ENC_LEFT_STEP);
 		break;
 	case ENC_RIGHT_STEP:
-		if ((encoderNr == 0) && (voltage_setp < 240)) {
-			voltage_setp ++;
-		}
-		if ((encoderNr == 1) && (current_setp < 300)) {
-			current_setp ++;
-		}
+		encoder_step(encoderNr, ENC_RIGHT_STEP);
 		break;
 	case ENC_ERROR_STEP:
 		break;
@@ -115,6 +199,14 @@ static void encoder_decode(uint8_t encoderNr)
 
 	// copy the new state into the old state for the next task
 	encoderState[encoderNr].state.old = encoderState[encoderNr].state.new;
+
+	// Generate a step to tune the controller
+	if (setupController) {
+		if (encoderSwitchDebounced[0])
+			voltage_setpSM = 120;
+		else
+			voltage_setpSM = 0;
+	}
 }
 
 /**
@@ -126,8 +218,12 @@ void encoder_task(void) {
 	// Read the encoder
 	encoderState[0].bit.new_A = GPIO_ReadInputDataBit(ENC_PORT_0A, ENC_PIN_0A);
 	encoderState[0].bit.new_B = GPIO_ReadInputDataBit(ENC_PORT_0B, ENC_PIN_0B);
+	encoderSwitch[0] = GPIO_ReadInputDataBit(ENC_PORT_0S, ENC_PIN_0S);
 	encoder_decode(0);
 	encoderState[1].bit.new_A = GPIO_ReadInputDataBit(ENC_PORT_1A, ENC_PIN_1A);
 	encoderState[1].bit.new_B = GPIO_ReadInputDataBit(ENC_PORT_1B, ENC_PIN_1B);
+	encoderSwitch[1] = GPIO_ReadInputDataBit(ENC_PORT_1S, ENC_PIN_1S);
 	encoder_decode(1);
+
+
 }
