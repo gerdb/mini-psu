@@ -30,9 +30,6 @@
 void encoder_init(void);
 void encoder_task(void);
 
-extern int voltage_setp;
-extern int current_setp;
-
 // Encoder steps
 typedef enum {
 	ENC_NO_STEP, ENC_RIGHT_STEP, ENC_LEFT_STEP, ENC_ERROR_STEP
@@ -65,5 +62,5 @@ typedef union {
 #define ENC_PIN_0S GPIO_Pin_6
 #define ENC_PIN_1A GPIO_Pin_15
 #define ENC_PIN_1B GPIO_Pin_14
-#define ENC_PIN_1S GPIO_Pin_14
+#define ENC_PIN_1S GPIO_Pin_13
 #endif /* ENCODER_H_ */
