@@ -102,5 +102,5 @@ void dac_task(void) {
 
 	// Set the output voltage and current
 	dac_setVoltageValue(voltage_setp * 100);
-	dac_setCurrentValue(current_setp * 10);
+	dac_setCurrentValue(current_setp * 10 + 100); // Add the offset of 100mA
 }
