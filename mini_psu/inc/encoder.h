@@ -50,14 +50,14 @@ typedef union {
 	} bit;
 } T_UN_STATES;
 
-#define ENC_PORT_0A GPIOC
+#define ENC_PORT_0A GPIOB //fix a hardware problem of PinC8 GPIOC
 #define ENC_PORT_0B GPIOC
 #define ENC_PORT_0S GPIOC
 #define ENC_PORT_1A GPIOB
 #define ENC_PORT_1B GPIOB
 #define ENC_PORT_1S GPIOB
 
-#define ENC_PIN_0A GPIO_Pin_8
+#define ENC_PIN_0A GPIO_Pin_0 //fix a hardware problem of PinC8 GPIO_Pin_8
 #define ENC_PIN_0B GPIO_Pin_7
 #define ENC_PIN_0S GPIO_Pin_6
 #define ENC_PIN_1A GPIO_Pin_15

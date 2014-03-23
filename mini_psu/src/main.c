@@ -68,9 +68,6 @@ int main(void) {
 	// Init view and display after 1 sec
 	view_init();
 
-	dac_setVoltageValue(6000);
-	dac_setCurrentValue(1000);
-
 	while (1) {
 		// wait for task tick
 		while (tick == 0);
@@ -99,6 +96,7 @@ void setTick(void) {
 
 	// 1ms Task
 	adc_task();
+	dac_task();
 	controller_SlowTask();
 	encoder_task();
 }
