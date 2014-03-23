@@ -25,8 +25,8 @@
 
 // Setpoints
 int voltage_setpSM = 0;
-int voltage_setp = 120;
-int current_setp = 200;
+int voltage_setp = 50; // 5V Default
+int current_setp = 100; // 1A Default
 
 // Mode
 int setupController = 0;
