@@ -28,6 +28,7 @@ extern int voltage_setp;
 extern int current_setp;
 
 extern int setupController;
+extern int outputOn;
 
 extern int pid_KP;
 extern int pid_KI;

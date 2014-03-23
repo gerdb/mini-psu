@@ -20,6 +20,7 @@
  *
  */
 #include "adc.h"
+#include "data.h"
 #include "project.h"
 
 // The result of the analog to digital conversion
@@ -67,7 +68,7 @@ void adc_init() {
 
 	  // ADC Common Init
 	  ADC_CommonInitStructure.ADC_Mode = ADC_Mode_Independent;
-	  ADC_CommonInitStructure.ADC_Prescaler = ADC_Prescaler_Div6;
+	  ADC_CommonInitStructure.ADC_Prescaler = ADC_Prescaler_Div4; //21MHz ADC clock
 	  ADC_CommonInitStructure.ADC_DMAAccessMode = ADC_DMAAccessMode_Disabled;
 	  ADC_CommonInitStructure.ADC_TwoSamplingDelay = ADC_TwoSamplingDelay_5Cycles;
 	  ADC_CommonInit(&ADC_CommonInitStructure);
@@ -75,7 +76,7 @@ void adc_init() {
 	  // ADC1 Init
 	  ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
 	  ADC_InitStructure.ADC_ScanConvMode = ENABLE;
-	  ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
+	  ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
 	  ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T1_CC1;
 	  ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
 	  ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
@@ -85,10 +86,11 @@ void adc_init() {
 
 
 	  // ADC1 regular channel configuration
-	  ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_112Cycles);
-	  ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 2, ADC_SampleTime_112Cycles);
-	  ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 3, ADC_SampleTime_112Cycles);
-	  ADC_RegularChannelConfig(ADC1, ADC_Channel_3, 4, ADC_SampleTime_112Cycles);
+	  //15Cycles + 12 + 5 = 32 * 1/21MHz = 1.5µs
+	  ADC_RegularChannelConfig(ADC1, ADC_CHAN_IOUT, 1, ADC_SampleTime_15Cycles);
+	  ADC_RegularChannelConfig(ADC1, ADC_CHAN_VSM , 2, ADC_SampleTime_15Cycles);
+	  ADC_RegularChannelConfig(ADC1, ADC_CHAN_VOUT, 3, ADC_SampleTime_15Cycles);
+	  ADC_RegularChannelConfig(ADC1, ADC_CHAN_VIN , 4, ADC_SampleTime_15Cycles);
 
 	  // Enable DMA request after last transfer (Single-ADC mode) */
 	  ADC_DMARequestAfterLastTransferCmd(ADC1, ENABLE);
@@ -124,4 +126,63 @@ void adc_start_conv(void) {
  */
 uint16_t adc_getResult(int chan) {
 	return ADCConvertedValue[chan];
+}
+
+/**
+ * get all 4 channel
+ */
+void adc_task(void) {
+
+	voltage_VIN   = ADCConvertedValue[ADC_CHAN_VIN];
+	current_IOUT  = ADCConvertedValue[ADC_CHAN_IOUT];
+}
+
+/**
+ * get ADC value of voltage in mV
+ */
+int adc_VoltToADC(int volt) {
+	// Voltage divider is 10k:1k
+	// So the gain is set to x11
+	// Reference voltage is 3.3V
+	// Volt = ADC / 4096 * 3.3V * 11
+	// ADC = Vout / 11 / 3.3V * 4096
+	// ADC = Vout / 11 / 3.3V * 4096
+	// ADC = Vout(V) * 112,837465565
+	// ADC = Vout(mV) * 0.112837465565
+	// DAC = ca. Vout(mV) * 231 / (2048)
+	return (volt * 463) / 4096;
+}
+
+/**
+ * get voltage of an ADC value in 10mV steps
+ */
+int adc_ADCTo10mV(int adcval) {
+	// Voltage divider is 10k:1k
+	// So the gain is set to x11
+	// Reference voltage is 3.3V
+	// Volt = ADC / 4096 * 3.3V * 11
+	// Volt(10mV) = ADC / 4096 * 3.3V * 11 *100
+	// Volt(10mV) = ADC * 0.886230469
+	// Volt(10mV) = ADC * 1815/2048
+	return (adcval * 1815) / 2048;
+}
+
+/**
+ * get current of an ADC value in 1mA steps
+ */
+int adc_ADCTo1mA(int adcval) {
+	// Offset is 3.3V/33R = 100mA
+	// Voltage divider of opamp is 6.19k:1k
+	// Shunt is 10mR
+	// So the total gain is: 7.19*7.19*10mR = 0,516961R
+	// Reference voltage is 3.3V
+	// Current = ADC / 4096 * 3.3V / R
+	// Current = ADC * 0.001558462
+	// Current(mA) = ADC * 1.558462
+	// Current(mA) = ADC * 1.558462
+	int mamps = (adcval * 25) / 16 - 100;
+	// limit to positive values
+	if (mamps < 0)
+		mamps = 0;
+	return mamps;
 }

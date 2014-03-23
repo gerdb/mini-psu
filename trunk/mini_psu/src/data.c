@@ -29,12 +29,15 @@ int voltage_setp = 120;
 int current_setp = 200;
 
 // Mode
-int setupController = 1;
+int setupController = 0;
+
+// Output on/off
+int outputOn = 0;
 
 // Controller settings
-int pid_KP = 1;
-int pid_KI = 2;
-int pid_KD = 3;
+int pid_KP = 2; //10
+int pid_KI = 3; //5
+int pid_KD = 30; //20
 
 // Voltage and currents
 int voltage_VOUT = 0;

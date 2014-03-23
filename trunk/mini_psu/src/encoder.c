@@ -21,6 +21,7 @@
  */
 #include "encoder.h"
 #include "data.h"
+#include "adc.h"
 
 // Local functions
 static void encoder_decode(uint8_t encoderNr);
@@ -93,13 +94,29 @@ void encoder_init(void) {
  * Decodes encoder's push button
  */
 static void encoder_click(uint8_t encoderNr) {
-	if (setupController) {
-		if (encoderNr == 1) {
+	// Toggle the output
+	if (encoderNr == 0) {
+		if (outputOn)
+			outputOn = 0;
+		else
+			outputOn = 1;
+	}
+
+
+	// move the cursor or switch between the 2 screens
+	if (encoderNr == 1) {
+		if (setupController) {
 			cursor ++;
-			if (cursor >= 3)
+			if (cursor >= 3) {
 				cursor = 0;
+				setupController = 0;
+			}
+		} else {
+			setupController = 1;
+			cursor = 0;
 		}
 	}
+
 }
 
 static void encoder_step(uint8_t encoderNr, T_ENC_STEP direction) {
@@ -200,13 +217,13 @@ static void encoder_decode(uint8_t encoderNr)
 	// copy the new state into the old state for the next task
 	encoderState[encoderNr].state.old = encoderState[encoderNr].state.new;
 
-	// Generate a step to tune the controller
-	if (setupController) {
-		if (encoderSwitchDebounced[0])
-			voltage_setpSM = 120;
-		else
-			voltage_setpSM = 0;
-	}
+//	// Generate a step to tune the controller
+//	if (setupController) {
+//		if (encoderSwitchDebounced[0])
+//			voltage_setpSM = voltage_VOUT + adc_getADCofVolt(1000);
+//		else
+//			voltage_setpSM = 0;
+//	}
 }
 
 /**

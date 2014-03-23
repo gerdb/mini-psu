@@ -36,7 +36,8 @@ void oled_writeStringLarge(uint8_t x, uint8_t y, char s[], uint8_t color);
 void oled_writeCharSmall(char c, uint8_t color);
 void oled_writeCharMedium(char c, uint8_t color);
 void oled_writeCharLarge(char c, uint8_t color);
-void oled_drawScope (void);
+void oled_drawScope(int newval);
+void oled_clear(void);
 
 // Makros
 #define OLED_DC_DATA()    GPIOC->BSRRL = GPIO_Pin_1; // High
