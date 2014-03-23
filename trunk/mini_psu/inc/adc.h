@@ -49,4 +49,6 @@ int adc_ADCTo1mA(int adcval);
 
 #define ADC1_DR_ADDRESS    ((uint32_t)0x4001204C)
 
+#define ADC_OFFSET 290
+
 #endif /* ADC_H_ */

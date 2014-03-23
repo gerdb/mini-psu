@@ -180,7 +180,7 @@ int adc_ADCTo1mA(int adcval) {
 	// Current = ADC * 0.001558462
 	// Current(mA) = ADC * 1.558462
 	// Current(mA) = ADC * 1.558462
-	int mamps = (adcval * 25) / 16 - 100;
+	int mamps = (adcval * 25) / 16 - ADC_OFFSET;
 	// limit to positive values
 	if (mamps < 0)
 		mamps = 0;
