@@ -50,6 +50,7 @@ static void view_DisplayControllerSettings(void);
 void view_init(void) {
 
 	oled_init();
+	oled_init(); // Workaround. So OLED starts correct at power on
 }
 
 /*

@@ -156,7 +156,7 @@ inline void controller_task(void){
 		pwm_set(0);
 	}
 
-	GPIO_ResetBits(DEBUG_PORT, DEBUG_PIN);
+	GPIO_ResetBits(DEBUG_PORT, DEBUG_PIN);	// duration: 3µs / period: 12µs
 }
 
 /**
