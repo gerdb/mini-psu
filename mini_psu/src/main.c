@@ -29,6 +29,7 @@
 #include "dac.h"
 #include "view.h"
 #include "encoder.h"
+#include "controller.h"
 #include "data.h"
 
 /*
@@ -40,41 +41,44 @@ int tick50msCnt = 0;
 int tick100ms = 0;
 int tick100msCnt = 0;
 
+
 /*
  * Main function
  */
 int main(void) {
+
+	int i;
 
 	// initialize all modules
 	adc_init();
 	dac_init();
 	pwm_init();
 	encoder_init();
-	view_init();
-
+	controller_init();
 
 	// set sys tick to 1ms
 	SysTick_Config(SystemCoreClock / 1000);
 
-	dac_setVoltageValue(1000);
-	dac_setCurrentValue(2000);
+	// Wait 1sec
+	for (i=0; i< 10;i++) {
+		while (tick100ms == 0);
+		tick100ms = 0;
+	}
+
+	// Init view and display after 1 sec
+	view_init();
+
+	dac_setVoltageValue(6000);
+	dac_setCurrentValue(1000);
 
 	while (1) {
-
-
-
 		// wait for task tick
 		while (tick == 0);
 		tick = 0;
 		if (tick50ms) {
-			voltage_VOUT = adc_getResult(ADC_CHAN_VIN);
-			voltage_VSM = adc_getResult(ADC_CHAN_VIN);
 			tick50ms = 0;
 			view_task();
 		}
-
-		//adc_start_conv();
-
 	}
 }
 
@@ -93,5 +97,8 @@ void setTick(void) {
 		tick100ms = 1;
 	}
 
+	// 1ms Task
+	adc_task();
+	controller_SlowTask();
 	encoder_task();
 }

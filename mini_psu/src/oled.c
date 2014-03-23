@@ -281,16 +281,27 @@ void oled_writeStringSmall(uint8_t x, uint8_t y, char s[], uint8_t color){
 	}
 }
 
-void oled_drawScope (void){
+/*
+ * Draw a scope to display the output current
+ */
+void oled_drawScope (int pnewval){
 	int x, y, n;
 	int val;
+
+	// Limit the input value to 0..15
+	int newval  = pnewval;
+	if (newval>15)
+		newval = 15;
+	if (newval<0)
+		newval = 0;
 
 	oled_goto (0, 48, 16);
 	n = scope_index;
 	for (x = 0; x < 96 ; x++) {
 
-		//oled_write_data(OLED_DARK_YELLOW);
-
+		if (x == 95) {
+			scope_data[n] = newval;
+		}
 		val = scope_data[n];
 		for (y = 0; y < 16; y++) {
 			if (y == (15-val))
@@ -299,8 +310,6 @@ void oled_drawScope (void){
 				oled_write_data(OLED_BLACK);
 		}
 
-		//oled_write_data(OLED_DARK_YELLOW);
-
 		n++;
 		if (n >= 96)
 			n = 0;
@@ -308,4 +317,19 @@ void oled_drawScope (void){
 	scope_index++;
 	if (scope_index >= 96)
 		scope_index = 0;
+}
+
+/*
+ * Clear the screen
+ */
+void oled_clear(void){
+	int x, y;
+
+	oled_goto (0, 0, 64);
+	for (y = 0; y < 64 ; y++) {
+		for (x = 0; x < 96 ; x++) {
+			oled_write_data(OLED_BLACK);
+		}
+	}
+
 }

@@ -30,7 +30,7 @@ void pwm_init(void) {
 	TIM_OCInitTypeDef  TIM_OCInitStructure;
 	GPIO_InitTypeDef GPIO_InitStructure;
 	TIM_BDTRInitTypeDef TIM_BDTRInitStructure;
-	uint16_t PrescalerValue = 0;
+
 
     GPIO_StructInit(&GPIO_InitStructure);
     TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
@@ -62,16 +62,19 @@ void pwm_init(void) {
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource7, GPIO_AF_TIM1);
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource8, GPIO_AF_TIM1);
 
-	// Compute the prescaler value
-	PrescalerValue = (uint16_t) ((SystemCoreClock /2) / 42000000) - 1;
+	// Time base configuration
+	TIM_TimeBaseStructure.TIM_Period = 500 - 1 ; // 84kHz
+	TIM_TimeBaseStructure.TIM_Prescaler = 1-1; // 84MHz/1 = 84MHz
+	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
 
 	// Time base configuration
 	TIM_TimeBaseStructure.TIM_Period = 1000 - 1 ; // 42kHz
-	TIM_TimeBaseStructure.TIM_Prescaler = PrescalerValue;
+	TIM_TimeBaseStructure.TIM_Prescaler = 2-1; // 84MHz/2 = 42MHz
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
-	TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
 
 	// PWM1 Mode configuration: Channel0
 	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;

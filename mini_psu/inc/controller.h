@@ -22,11 +22,22 @@
 #ifndef CONTROLLER_H_
 #define CONTROLLER_H_
 #include "stm32f4xx.h"
+#include "stm32f4xx_gpio.h"
+#include "stm32f4xx_rcc.h"
+#include "misc.h"
 
+//global values (debugging)
+extern int contr;
+extern int err;
+extern int scaleSetpointFilt;
+extern int integrator;
 // Function Prototypes
 void controller_init(void);
-void controller_task(int channel);
-void controller_setSetpoint(int channel, int setp);
+inline void controller_task(void);
+void controller_SlowTask(void);
 
+//defines
+#define DEBUG_PIN GPIO_Pin_9
+#define DEBUG_PORT GPIOC
 
 #endif /* CONTROLLER_H_ */

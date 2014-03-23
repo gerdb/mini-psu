@@ -3,7 +3,7 @@
  *  File:         controller.c
  *  Author:       Gerd Bartelt - www.sebulli.com
  *
- *  Description:  PD controller for the high speed actuators
+ *  Description:  PID controller
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,82 +24,166 @@
 #include "controller.h"
 #include "adc.h"
 #include "pwm.h"
+#include "data.h"
 
-
-// How the analog channels are mapped
-int AD_CHANNEL_MAP[4][2];
-// Setpoints
-int32_t setpoint[4]={0,0,0,0};
-
-// The controller parameters
-int32_t KP = 120; //120
-int32_t KD = 300; //-300
-#define CONTR_LIMIT 1000
-
+volatile int i;
+int contr;
+int err;
+int integrator = 0;
+int limit_up = 0;
+int limit_down = 0;
+int scaleSetpoint = 0;
+int scaleSetpointFilt2 = 0;
+int scaleSetpointFilt2L = 0;
+int scaleSetpointFilt = 0;
+int scaleSetpointFiltL = 0;
+int setpointFilt = 0;
+int setpointFiltL = 0;
+int voltage_VSM_old = 0;
 /**
  * Initialize the controller and configure the analog channels
  */
 void controller_init(void) {
+	GPIO_InitTypeDef GPIO_InitStructure;
+	TIM_TimeBaseInitTypeDef	TIM_TimeBaseStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
 
-	// Create a table with the index of all analog channels
-	AD_CHANNEL_MAP[0][0]=3;
-	AD_CHANNEL_MAP[0][1]=4;
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 
-	AD_CHANNEL_MAP[1][0]=2;
-	AD_CHANNEL_MAP[1][1]=5;
+	// Debug pin
+	GPIO_InitStructure.GPIO_Pin = DEBUG_PIN;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(DEBUG_PORT, &GPIO_InitStructure);
+	GPIO_ResetBits(DEBUG_PORT, DEBUG_PIN);
 
-	AD_CHANNEL_MAP[2][0]=1;
-	AD_CHANNEL_MAP[2][1]=6;
 
-	AD_CHANNEL_MAP[3][0]=0;
-	AD_CHANNEL_MAP[3][1]=7;
+
+	// Enable the TIM2 gloabal Interrupt
+	NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+
+	// TIM2 clock enable
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+	// Time base configuration
+	TIM_TimeBaseStructure.TIM_Period = 1000 - 1; // 84kHz
+	TIM_TimeBaseStructure.TIM_Prescaler = 1 - 1; // 84 MHz Clock
+	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
+	// TIM IT enable
+	TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+	//
+	TIM_Cmd(TIM2, ENABLE);
 
 }
-/**
- * Setter for the controllers setpoint
- *
- * @param
- * 			channel Channel no from 0 to 3
- * 			setp  Setpoint from -1000 to +1000
- *
- */
-void controller_setSetpoint(int channel, int setp) {
-	setpoint[channel] = setp;
-}
+
 
 /**
  * Controller task
- * Call this every 100µs
+ * Call this every 10µs
  *
- * @param
- * 			channel Channel no from 0 to 3
  *
  */
-void controller_task(int channel){
+inline void controller_task(void){
 
-	int32_t meas;
-	static int32_t meas_old[4]={0,0,0,0};
-	int32_t rdiff;
-	int32_t reg = 0;
+	GPIO_SetBits(DEBUG_PORT, DEBUG_PIN);
 
-	// Get the sensor value.
-	meas = adc_getResult(AD_CHANNEL_MAP[channel][0]) - adc_getResult(AD_CHANNEL_MAP[channel][1]);
+	// Read the ADC
+	voltage_VOUT  = ADCConvertedValue[ADC_CHAN_VOUT];
+	voltage_VSM   = ADCConvertedValue[ADC_CHAN_VSM];
+	// Restart ADC
+	ADC_SoftwareStartConv(ADC1);
 
-	// Calculate the difference between setpoint and sensor value
-	rdiff = setpoint[channel] - meas;
+	setpointFiltL += voltage_setpSM - setpointFilt;
+	setpointFilt = setpointFiltL >> 2;
 
-	// The PD regulator with a scaling factor
-	reg = rdiff *KP + (meas_old[channel]-meas) * KD;
-	reg /= 32;
+	err = setpointFilt - voltage_VSM;
 
-	// Store the old value for the D-value
-	meas_old[channel] = meas;
+	if (voltage_setpSM) {
+		if ((err > 0) && (!limit_up)) {
+			integrator += pid_KI * err;
+		}
+		if ((err < 0) && (!limit_down)) {
+			integrator += pid_KI * err;
+		}
+		// Limit integrator
+		if (integrator > 16384)
+			integrator = 16384;
+		if (integrator < -16384)
+			integrator = -16384;
+	} else {
+		integrator = 0;
+	}
 
-	// Limit the value
-	if (reg > +CONTR_LIMIT) reg = +CONTR_LIMIT;
-	if (reg < -CONTR_LIMIT) reg = -CONTR_LIMIT;
+	// calculate P and D part
+	err = (setpointFilt * scaleSetpointFilt) / 4096 - voltage_VSM;
 
-	// Set the PWM output
-	pwm_set(reg);
+	contr =   pid_KP * err
+			- pid_KD * (voltage_VSM-voltage_VSM_old)
+			+ integrator / 4;
+
+	voltage_VSM_old = voltage_VSM;
+
+	contr /= 128;
+
+
+	// Limit output value
+	limit_down = 0;
+	limit_up = 0;
+
+	if (contr >= 499) {
+		limit_up = 1;
+		contr = 499;
+	}
+
+	if (contr < 0) {
+		limit_down = 1;
+		contr = 0;
+	}
+
+
+	// Controller output
+	if (voltage_setpSM > 0) {
+		//pwm_set(120);
+		pwm_set(contr);
+	}
+	else {
+		pwm_set(0);
+	}
+
+	GPIO_ResetBits(DEBUG_PORT, DEBUG_PIN);
 }
 
+/**
+ * Controller slow task
+ * Call this every 1ms
+ *
+ *
+ */
+void controller_SlowTask(void){
+	if (outputOn)
+		voltage_setpSM = voltage_VOUT + adc_VoltToADC(1000);
+	else
+		voltage_setpSM = 0;
+
+	if (voltage_VIN > 1354) { // > 12V
+		// Calculate the scaling factor of the setpoint
+		// 4096: *1 (scaled by 4096)
+		// 500: PWM resolution
+		// 64: scaling factor of the controller
+		// +4096: +1
+		scaleSetpoint = 4096 * 500 * 128 / pid_KP / voltage_VIN + 4096;
+
+		// Filter it with a low pass filter
+		scaleSetpointFilt2L += scaleSetpoint - scaleSetpointFilt2;
+		scaleSetpointFilt2 = scaleSetpointFilt2L / 256;
+
+		scaleSetpointFiltL += scaleSetpointFilt2 - scaleSetpointFilt;
+		scaleSetpointFilt = scaleSetpointFiltL / 256;
+	}
+}
