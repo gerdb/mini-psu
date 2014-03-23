@@ -21,6 +21,7 @@
  */
 #include "dac.h"
 #include "data.h"
+#include "adc.h"
 #include "project.h"
 
 /**
@@ -102,5 +103,5 @@ void dac_task(void) {
 
 	// Set the output voltage and current
 	dac_setVoltageValue(voltage_setp * 100);
-	dac_setCurrentValue(current_setp * 10 + 100); // Add the offset of 100mA
+	dac_setCurrentValue(current_setp * 10 + ADC_OFFSET); // Add the offset of 100mA
 }
