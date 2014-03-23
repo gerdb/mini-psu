@@ -20,6 +20,7 @@
  *
  */
 #include "dac.h"
+#include "data.h"
 #include "project.h"
 
 /**
@@ -92,4 +93,14 @@ void dac_setCurrentValue(uint32_t value) {
 	// DAC = I(mA) * 0,641658259
 	// DAC = ca. 657 / 1024
 	DAC_SetChannel2Data(DAC_Align_12b_R, (value * 657) / 1024);
+}
+
+/**
+ * DAC task
+ */
+void dac_task(void) {
+
+	// Set the output voltage and current
+	dac_setVoltageValue(voltage_setp * 100);
+	dac_setCurrentValue(current_setp * 10);
 }

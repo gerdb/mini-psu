@@ -31,5 +31,6 @@
 void dac_init(void);
 void dac_setVoltageValue(uint32_t value);
 void dac_setCurrentValue(uint32_t value);
+void dac_task(void);
 
 #endif /* DAC_H_ */
